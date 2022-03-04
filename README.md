@@ -17,22 +17,19 @@ autojs脚本集合
 
 ### 首页
 
-<img src="img/首页.jpg" width="300px">
-
+<img src="img/首页.jpg" width="200px">
 
 ### 配置
 
-![配置](img/配置.jpg){:width="300px"}
-
+<img src="img/配置.jpg" width="200px">
 
 ### 说明
 
-![说明](img/说明.jpg)
-
+<img src="img/说明.jpg" width="200px">
 
 ### 菜单
 
-![菜单](img/菜单.jpg)
+<img src="img/菜单.jpg" width="200px">
 
 # 2. 钉钉打卡脚本
 
