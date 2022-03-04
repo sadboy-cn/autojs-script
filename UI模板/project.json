@@ -1,0 +1,34 @@
+{
+  "assets": [],
+  "build": {
+    "build_id": "915B0762-3",
+    "build_number": 3,
+    "build_time": 1646331234935,
+    "release": false
+  },
+  "encryptLevel": 0,
+  "useFeatures": [],
+  "icon": "res/icon.png",
+  "launchConfig": {
+    "displaySplash": false,
+    "hideLogs": true,
+    "splashText": "等待《钉钉打卡》脚本加载中",
+    "stableMode": false
+  },
+  "main": "main.js",
+  "name": "钉钉打卡",
+  "optimization": {
+    "removeAccessibilityService": false,
+    "removeOpenCv": true,
+    "unusedResources": true
+  },
+  "packageName": "com.tencent.mobileqq",
+  "permissionConfig": {
+    "requestListOnStartup": [
+      "android.permission.WRITE_EXTERNAL_STORAGE"
+    ]
+  },
+  "scripts": {},
+  "versionCode": 1,
+  "versionName": "1.0.2"
+}
