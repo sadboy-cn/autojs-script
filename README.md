@@ -15,20 +15,9 @@ autojs脚本集合
 
 ## 页面截图
 
-### 首页
-
 <img src="img/首页.jpg" width="200px">
-
-### 配置
-
 <img src="img/配置.jpg" width="200px">
-
-### 说明
-
 <img src="img/说明.jpg" width="200px">
-
-### 菜单
-
 <img src="img/菜单.jpg" width="200px">
 
 # 2. 钉钉打卡脚本
