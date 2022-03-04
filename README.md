@@ -17,7 +17,7 @@ autojs脚本集合
 
 ### 首页
 
-![首页](img/首页.jpg =50x50)
+<img src="img/首页.jpg" width="300px">
 
 
 ### 配置
