@@ -1,9 +1,9 @@
 {
   "assets": [],
   "build": {
-    "build_id": "915B0762-3",
-    "build_number": 3,
-    "build_time": 1646331234935,
+    "build_id": "537DBF8F-8",
+    "build_number": 8,
+    "build_time": 1646506491393,
     "release": false
   },
   "encryptLevel": 0,
@@ -30,5 +30,5 @@
   },
   "scripts": {},
   "versionCode": 1,
-  "versionName": "1.0.2"
+  "versionName": "1.0.3"
 }

@@ -1,25 +1,21 @@
 "ui";
 
+var common= require('common.js');
+
  /**
   * 全局参数配置-开始
   */
  //本地数据存储数据库名称
  const localDbName = "wx@sadboy.cn:dddk";
  const appName = "钉钉打卡"+app.versionName;
- var console = {
-     log:function(info){
-         ui.run(function() {
-            window.logText.setText(info);
-            setTimeout(() => {
-                 window.setPosition((device.width - window.width+80) / 2, 0);
-            }, 50);
-        });
-     }
- }
+ var showLog =function(info){
+         common.log(info);
+     };
  /**
  * 全局参数配置-结束
  */
 var window = null;
+var hasScreenCapturePower = false;
 threads.start(function () {
     window = floaty.window(
         <frame gravity="center" >
@@ -27,9 +23,13 @@ threads.start(function () {
         </frame>
     );
     window.exitOnClose();
-    console.log("悬浮日志")
+    common.ui.window = window;
+    showLog("悬浮日志")
 });
-
+//输出指定日志文件
+console.setGlobalLogConfig({
+    file: "/sdcard/auto_daka_log.txt",
+});
 
 ui.layout(
     <drawer id="drawer">
@@ -62,9 +62,6 @@ ui.layout(
                                 <checkbox id="douyin" marginLeft="4" marginRight="6" checked="false" />
                             </horizontal> */}
  
-                           
- 
-                           
                             <horizontal gravity="right">
                                 <button style="Widget.AppCompat.Button.Colored"  id="wool" text="启动" padding="12dp" w="auto" />
                                 <button style="Widget.AppCompat.Button.Colored"  id="close" text="关闭线程" />
@@ -86,7 +83,7 @@ ui.layout(
  
                             <horizontal  gravity="center_vertical" padding="5 5" >
                                 <View bg="#4F4F4F" h="*" w="10"  ></View>
-                                <text w="auto" padding="8 8 8 8" textColor="#222222" textSize="14sp" text="是否开启控制台" />
+                                <text w="auto" padding="8 8 8 8" textColor="#222222" textSize="14sp" text="是否调试模式" />
                                 <Switch id='switchIsShowConsole'  padding="8 8 8 8"  />
                             </horizontal>
 
@@ -199,6 +196,10 @@ ui.layout(
         </vertical>
     </drawer>
 );
+
+log('前台服务: ' + $settings.isEnabled('foreground_service'));
+
+$settings.setEnabled('foreground_service', true);
  
 //设置滑动页面的标题
 ui.viewpager.setTitles(["首页", "配置","说明"]);
@@ -232,7 +233,7 @@ initializeRightMenu();
 initializeData();
  
 /**
- * 薅羊毛
+ * 启动项目
  */
 ui.wool.click(function () {
     var appArray = getAppList();
@@ -245,7 +246,7 @@ ui.wool.click(function () {
     if (isShowConsole) {
         consoleMessage = "开启控制台";
     }
-    console.log("123");
+    showLog("点击开始按钮");
     var tipMessage = "本次共" + appArray.length + "个App参与薅羊毛任务，共循环"
         + ui.lockCode.getText() + "次,"
         + "屏幕滑动" + screenSileTimes + "次,"
@@ -257,8 +258,15 @@ ui.wool.click(function () {
             threads.start(function () {
                 //在新线程执行的代码
                 auto.waitFor();
-                console.log("薅羊毛开始请等待进入第一个程序！");
-                wool(appArray, foreachTimes, screenSileTimes, isShowConsole, timesInterval);
+                if (!hasScreenCapturePower && !requestScreenCapture()) {
+                    console.error("请求截图失败");
+                    exit();
+                }else{
+                    hasScreenCapturePower = true;
+                }
+                showLog("即将跳转执行定时任务");
+                common.data = textObj();
+                common.run();
             });
         } else {
  
@@ -270,10 +278,10 @@ ui.wool.click(function () {
  
  
 /**
- * 关闭薅羊毛程序
+ * 关闭程序
  */
 ui.close.click(function () {
-    console.log("薅羊毛线程已经被关闭！");
+    showLog("线程已经全部关闭！");
     threads.shutDownAll();
 });
 ui.btnSaveWoolConfig.click(function () {
@@ -289,7 +297,7 @@ ui.btnSaveWoolConfig.click(function () {
     woolStorage.put("isLighting", "" + ui.lighting.isChecked() + "");
     woolStorage.put("isNoticeSwitch", "" + ui.noticeSwitch.isChecked() + "");
     woolStorage.put("timesInterval", "" + ui.ddCode.getText() + "");
-    toastLog("薅羊毛配置保存成功！");
+    toastLog("配置保存成功！");
 });
 
 ui.btnCleanWoolConfig.click(function(){
@@ -436,55 +444,6 @@ function getAppList() {
     var appArray = new Array(); //app集合
     return appArray;
 }
- 
- 
- 
-/**
- * 主程序
- * @param {应用列表} appArray 
- * @param {应用打开次数} foreach_count 
- * @param {屏幕滑动次数} see_count 
- * @param {是否显示控制台} isShowConsole 
- * @param {延迟时间} timesInterval 
- */
-function wool(appArray, foreach_count, see_count, isShowConsole, timesInterval) {
-    threads.start(function () {
-        if (isShowConsole) {
-            //console.show();
-            //console.setSize(device.width, device.height / 4);
-        }
-    });
-    for (x = 1; x <= foreach_count; x++) {
-        for (y = 0; y < appArray.length; y++) {
-            let appName = appArray[y];
-            toastLog("当前程序：" + appName);
-            desc("配置").findOne().click();
-            sleep(3000);
-            desc("首页").findOne().click();
-            //app.launchApp(appName);
-            sleep(10000);//目前无法判断网速和splash时间，只能延迟久一点。10秒延迟。
-            if (appName == '今日头条极速版') {
-                
-                toutiaorun();
-            }
-            //滑动次数
-            for (z = 1; z <= see_count; z++) {
-               
-            }
-            console.clear();//
-        }
-    }
- 
-    console.log("程序执行完毕3秒后即将关闭...");
-    for (let i = 3; i >= 1; i--) {
-        console.log(i+"s");
-        sleep(1000);
-        if (i == 1) {
-            home();//返回主页面
-            return;
-        }
-    }
-}
   
 /**
  * 屏幕向下滑动并延迟8至12秒
@@ -496,18 +455,7 @@ function slideScreenDown(startX, startY, endX, endY, pressTime, timesInterval) {
     let delayTime = random(randomMin, randomMax);
     sleep(delayTime);
 }
- 
-/**
- *关闭广告
- */
-function caiDanCloseAd() {
-    if (id("btn_back").exists()) {
-        console.log("关闭广告");
-        id("btn_back").findOne().click();
-    }
-}
- 
- 
+  
 /**
  *点击一下屏幕
  */
@@ -516,9 +464,6 @@ function clickScreen() {
     var y = device.height / 2;
     click(x, y);
 }
- 
- 
- 
  
 /**
  *向右侧滑动
@@ -564,9 +509,6 @@ function randomFollow(follow_view_id) {
     }
 }
  
- 
- 
- 
 /**
  * 随机上滑（防止被判定是机器）上滑后停留时间至少是10S，造成假象表示是对内容感兴趣
  * 点赞和关注先不搞。
@@ -574,7 +516,7 @@ function randomFollow(follow_view_id) {
 function randomUpSildeScreen() {
     let randomIndex = random(1, 50);
     if (randomIndex == 1) {
-        console.log("随机上滑被执行了!!!");
+        showLog("随机上滑被执行了!!!");
         pressTime = random(200, 500);
         swipe(device.width / 2, 500, device.width / 2, device.height - 200, 300);
         delayTime = random(10000, 15000);
@@ -589,7 +531,7 @@ function randomUpSildeScreen() {
 function randomDownSildeScreen() {
     let randomIndex = random(1, 20);
     if (randomIndex == 1) {
-        console.log("连续下滑被执行了");
+        showLog("连续下滑被执行了");
         swipe(device.width / 2, device.height - 200, device.width / 2, 500, 300);
         sleep(2000);
         swipe(device.width / 2, device.height - 200, device.width / 2, 500, 300);
@@ -598,31 +540,42 @@ function randomDownSildeScreen() {
     }
 }
  
- 
 /**
  *  
  * 获取当前时间
  */
 function getTime() {
-    var date = new Date();
-    var year = date.getFullYear();
-    var month = date.getMonth() + 1;
-    if (month < 10) {
-        month = "0" + month;
-    };
-    var day = date.getDate();
-    if (day < 10) {
-        day = "0" + day;
-    };
-    var hour = date.getHours();
-    if (hour < 10) {
-        hour = "0" + hour;
-    };
-    var minute = date.getMinutes();
-    if (minute < 10) {
-        minute = "0" + minute;
-    };
-    return year +"-"+ month +"-"+ day +" "+ hour +":"+ minute+":"+ "0";
-    
+    return common.getTime();
 };
  
+/**
+ * 将输入框等的值转为json
+ */
+function textObj(){
+    var obj = {
+        "lighting":ui.lighting.isChecked(),
+        "lockCode":ui.lockCode.getText(),
+        "ddAccount":ui.ddAccount.getText(),
+        "ddCode":ui.ddCode.getText(),
+        "ddCom":"保利威",
+        "noticeSwitch":ui.noticeSwitch.isChecked(),
+        "serverKey":ui.serverKey.getText(),
+        "timeH":getInt(ui.timeH.getText()),
+        "timeM":getInt(ui.timeM.getText()),
+        "timeS":getInt(ui.timeS.getText()),
+        "timeLost":getInt(ui.timeLost.getText()),
+        "debug":ui.switchIsShowConsole.isChecked()
+    }
+    return obj;
+}
+
+/**
+ * 将字符转数字，默认0
+ * @param {*} text 
+ */
+function getInt(text){
+    if(text == null || text == ""){
+        return 0;
+    }
+    return parseInt(text);
+}
