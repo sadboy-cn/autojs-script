@@ -106,16 +106,26 @@ ui.layout(
                                 <card w="*" h="auto" margin="10 8" cardCornerRadius="6dp"
                                         cardElevation="2dp" gravity="center">  
                                     <linear>
-                                        <horizontal layout_gravity="center_vertical" layout_weight="1"> 
-                                            <text padding="8 10 0 8" textColor="red" textSize="15sp" text="*" />
-                                            <text w="auto" textColor="#222222" textSize="14sp" text="钉钉账号:" />
-                                            <input id="ddAccount" text=""  hint="钉钉手机号"  textSize="13sp"  inputType="number" />
-                                        </horizontal>
-                                        <horizontal layout_gravity="center_vertical" layout_weight="1"> 
-                                            <text padding="8 10 0 8" textColor="red" textSize="15sp" text="*" />
-                                            <text w="auto" textColor="#222222" textSize="14sp" text="钉钉密码:" />
-                                            <input id="ddCode" text=""  hint="钉钉登录密码"  textSize="13sp"  inputType="text" />
-                                        </horizontal>
+                                        <vertical>
+                                            <horizontal layout_gravity="center_vertical" layout_weight="1"> 
+                                                <text padding="8 10 0 8" textColor="red" textSize="15sp" text="*" />
+                                                <text w="auto" textColor="#222222" textSize="14sp" text="钉钉账号:" />
+                                                <input id="ddAccount" text=""  hint="钉钉手机号"  textSize="13sp"  inputType="number" />
+                                            </horizontal>
+                                            <horizontal layout_gravity="center_vertical" layout_weight="1"> 
+                                                <text padding="8 10 0 8" textColor="red" textSize="15sp" text="*" />
+                                                <text w="auto" textColor="#222222" textSize="14sp" text="钉钉密码:" />
+                                                <input id="ddCode" text=""  hint="钉钉登录密码"  textSize="13sp"  inputType="text" />
+                                            </horizontal>
+                                            
+                                        </vertical>
+                                        <vertical>
+                                            <horizontal layout_gravity="center_vertical" layout_weight="1"> 
+                                                <text padding="8 10 0 8" textColor="red" textSize="15sp" text="*" />
+                                                <text w="auto" textColor="#222222" textSize="14sp" text="公司名称:" />
+                                                <input id="comName" text=""  hint="公司名称"  textSize="13sp"  inputType="text" w="*"/>
+                                            </horizontal>
+                                        </vertical>
                                     </linear>                        
                                 </card>
                             </horizontal>
@@ -242,16 +252,15 @@ ui.wool.click(function () {
     var screenSileTimes = ui.ddAccount.getText();
     var isShowConsole = ui.switchIsShowConsole.isChecked();
     var timesInterval = ui.ddCode.getText();
-    var consoleMessage = "不开启控制台";
-    if (isShowConsole) {
-        consoleMessage = "开启控制台";
-    }
     showLog("点击开始按钮");
-    var tipMessage = "本次共" + appArray.length + "个App参与薅羊毛任务，共循环"
-        + ui.lockCode.getText() + "次,"
-        + "屏幕滑动" + screenSileTimes + "次,"
-        + consoleMessage
+    var tipMessage;
+    if(isShowConsole){
+        tipMessage = "本次以调试模式启动,将每隔5分钟执行一次"
         + "确认执行吗？如果配置不正确请点击取消，前往配置页面进行参数修正！";
+    }else{
+        tipMessage = "本次以正常模式启动,"
+        + "确认执行吗？如果配置不正确请点击取消，前往配置页面进行参数修正！";
+    }
     confirm(tipMessage).then(value => {
         //当点击确定后会执行这里, value为true或false, 表示点击"确定"或"取消"
         if (value) {
@@ -266,6 +275,10 @@ ui.wool.click(function () {
                 }
                 showLog("即将跳转执行定时任务");
                 common.data = textObj();
+                // if(common.data.debug){
+                //     //调试模式下一分钟执行
+                //     common.data.timeM = new Date().getMinutes()+1;
+                // }
                 common.run();
             });
         } else {
@@ -297,6 +310,7 @@ ui.btnSaveWoolConfig.click(function () {
     woolStorage.put("isLighting", "" + ui.lighting.isChecked() + "");
     woolStorage.put("isNoticeSwitch", "" + ui.noticeSwitch.isChecked() + "");
     woolStorage.put("timesInterval", "" + ui.ddCode.getText() + "");
+    woolStorage.put("comNameStr", "" + ui.comName.getText() + "");
     toastLog("配置保存成功！");
 });
 
@@ -380,6 +394,7 @@ function initializeData() {
     var isNoticeSwitch = woolStorage.get("isNoticeSwitch");
     var timesInterval = woolStorage.get("timesInterval");
     var appInstallDateTime = woolStorage.get("appInstallDateTime");
+    var comNameStr = woolStorage.get("comNameStr");
     if (foreachTimes != null) {
         ui.lockCode.setText(foreachTimes);
     }
@@ -418,6 +433,9 @@ function initializeData() {
     }
     if (timesInterval != null) {
         ui.ddCode.setText(timesInterval);
+    }
+    if (comNameStr != null) {
+        ui.comName.setText(comNameStr);
     }
     if (appInstallDateTime != null) {
         var curTime = new Date();
@@ -556,8 +574,8 @@ function textObj(){
         "lighting":ui.lighting.isChecked(),
         "lockCode":ui.lockCode.getText(),
         "ddAccount":ui.ddAccount.getText(),
-        "ddCode":ui.ddCode.getText(),
-        "ddCom":"保利威",
+        "ddCode":ui.comName.getText(),
+        "ddCom": ui.comName.getText(),
         "noticeSwitch":ui.noticeSwitch.isChecked(),
         "serverKey":ui.serverKey.getText(),
         "timeH":getInt(ui.timeH.getText()),

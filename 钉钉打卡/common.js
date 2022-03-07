@@ -64,15 +64,21 @@ function timeCycle() {
   threads.start(function(){
       //实际随机分钟数
       var realTimeLost = random(0, common.data.timeLost);
-      //TODO 可能存在8:90:30这种bug
-      common.log("随机"+realTimeLost+"分钟,打卡："+common.data.timeH+":"+(common.data.timeM+realTimeLost)+":"+common.data.timeS);
+      //problem1 可能存在8:90:30这种bug
+      if(common.data.debug){
+        common.log("调试模式,打卡：(分钟%5="+common.data.timeM+"执行)");
+      }else{
+        common.log("随机"+realTimeLost+"分钟,打卡："+common.data.timeH+":"+(common.data.timeM+realTimeLost)+":"+common.data.timeS);
+      }
       sleep(3000);
       while (true) {
           var nowH = new Date().getHours();
           var nowM = new Date().getMinutes();
           var nowS = new Date().getSeconds();
           //TODO 没必要循环这么快，分钟相同其实就可以了
-          if ( (nowH%1 == common.data.timeH && nowM == common.data.timeM+realTimeLost && nowS == common.data.timeS)) {
+          var timeHEqual = common.data.debug?true:nowH == common.data.timeH;
+          var timeMEqual = common.data.debug?nowM%5 == common.data.timeM:nowM == common.data.timeM+realTimeLost;
+          if ( ( timeHEqual && timeMEqual && nowS == common.data.timeS)) {
               mainThread.interrupt();
               common.log("到达指定时间，停止主任务")
               timeTask();
@@ -94,7 +100,9 @@ function timeTask() {
    }finally{
      
    }
-  console.log("定时任务执行完毕，回到主任务");
+  common.log("定时任务执行完毕，休息"+common.data.timeLost+"分钟后，回到主任务");
+  //修复 problem1
+  sleep(common.data.timeLost*60*1000);
   mainThread = threads.start(timeCycle);
 }
 
@@ -245,18 +253,27 @@ function gotoDingDing(){
     }
   }
 
-  //TODO 只有开启通知才需要统计
- 
-  //点击统计，查看统计结果
-  click("统计");//此处不能使用statistics.click();大概是按钮clickable=false导致
-  common.log("7、点击统计，查找四，等待10s");
+  //只有开启通知才需要统计
+  if(common.data.noticeSwitch){
+    //点击统计，查看统计结果
+    click("统计");//此处不能使用statistics.click();大概是按钮clickable=false导致
+    common.log("7、点击统计，查找四，等待10s");
 
-  var four = text("四").findOne(10000);
-  if(four == null){
-    throw "十秒未找到四，未知错误";
-  }else{
-    console.log("找到四");
+    var four = text("四").findOne(10000);
+    if(four == null){
+      throw "十秒未找到四，未知错误";
+    }else{
+      console.log("找到四，等待加载10s");
+      sleep(5*1000);
+    }
+    var img = captureScreen();
+    images.saveImage(img, "/sdcard/result.png");
+    sleep(5 * 1000);
+    sendServerNotice(img);
+    img.recycle();
   }
+
+
 
   //返回上一页，为下一次做准备
   var times = 3;
@@ -312,6 +329,18 @@ function loginDD(ddAccount,ddLoginCode){
     }
     throw "十秒未进入系统，未登录异常，未知错误";
   }
+}
+
+function sendServerNotice(img){
+  var serverUrl = "https://sctapi.ftqq.com/" + common.data.serverKey + ".send";
+  var resizeImg = images.resize(img, [device.width/4, device.height/4]); 
+  var imgBase64 = images.toBase64(resizeImg, "png", 50);
+  let res = http.post(serverUrl, {
+    "title": "钉钉打卡",
+    "desp": "![img][tt]\n\n"+"[tt]:data:image/png;base64,"+imgBase64
+  });
+  resizeImg.recycle();
+  console.log(res.body);
 }
 
 module.exports = common;
